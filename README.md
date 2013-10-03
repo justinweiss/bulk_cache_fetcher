@@ -40,10 +40,11 @@ end
 it even returns them in the same order you return them in:
 
 ```ruby
-cache_fetcher.fetch([2, 1, 3]) do |identifiers|
-  expensive_calculation(identifiers)
+results = cache_fetcher.fetch([2, 1, 3]) do |identifiers|
+  expensive_calculation(identifiers) # => returns [result 2, result 1, result 3]
 end
 
+results.first # => expensive_calculation([2])
 cache.read(1) # => expensive_calculation([1])
 ```
 
