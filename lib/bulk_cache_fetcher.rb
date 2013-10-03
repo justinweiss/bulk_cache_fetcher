@@ -5,7 +5,7 @@
 # Rails' nested caching while avoiding the n+1 queries problem in the
 # uncached case.
 class BulkCacheFetcher
-  VERSION = '0.0.1'
+  VERSION = '0.0.2'
 
   # Creates a new bulk cache fetcher, backed by +cache+. Cache must
   # respond to the standard Rails cache API, described on
@@ -43,10 +43,11 @@ class BulkCacheFetcher
     cached_objects = []
     uncached_identifiers = object_identifiers.dup
 
-    object_identifiers.each do |identifier|
-      cache_key = cache_key(identifier)
-      cached_object = @cache.read(cache_key)
+    cache_keys = cache_keys(object_identifiers)
+    found_objects = @cache.read_multi(cache_keys)
 
+    cache_keys.each do |cache_key|
+      cached_object = found_objects[cache_key]
       uncached_identifiers.delete(cache_key) if cached_object
       cached_objects << cached_object
     end
@@ -90,6 +91,11 @@ class BulkCacheFetcher
   # of the identifier.
   def cache_key(identifier)
     Array(identifier).first
+  end
+
+  # Returns the cache keys for all of the +identifiers+.
+  def cache_keys(identifiers)
+    identifiers.map { |identifier| cache_key(identifier) }
   end
 
   # Makes sure we can iterate over identifiers.

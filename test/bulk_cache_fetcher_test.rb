@@ -10,6 +10,14 @@ class InMemoryCache
 
   def read(key); cache[key]; end
   def write(key, value, opts = {}); options[key] = opts; cache[key] = value; end
+  def read_multi(keys)
+    results = {}
+    keys.each do |key|
+      results[key] = read(key) if read(key)
+    end
+    results
+  end
+
 end
 
 class BulkCacheFetcherTest < Minitest::Unit::TestCase
