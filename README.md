@@ -1,5 +1,7 @@
 # BulkCacheFetcher
 
+[![Build Status](https://travis-ci.org/justinweiss/bulk_cache_fetcher.png?branch=master)](https://travis-ci.org/justinweiss/bulk_cache_fetcher) [![Code Climate](https://codeclimate.com/github/justinweiss/bulk_cache_fetcher.png)](https://codeclimate.com/github/justinweiss/bulk_cache_fetcher)
+
 Bulk Cache Fetcher fills the gap between [Russian doll caching](http://37signals.com/svn/posts/3113-how-key-based-cache-expiration-works) and the n+1 queries problem.
 
 Russian doll caching is really great for handling views and
