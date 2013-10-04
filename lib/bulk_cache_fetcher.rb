@@ -5,7 +5,7 @@
 # Rails' nested caching while avoiding the n+1 queries problem in the
 # uncached case.
 class BulkCacheFetcher
-  VERSION = '0.0.2'
+  VERSION = '0.0.3'
 
   # Creates a new bulk cache fetcher, backed by +cache+. Cache must
   # respond to the standard Rails cache API, described on
@@ -44,7 +44,7 @@ class BulkCacheFetcher
     uncached_identifiers = object_identifiers.dup
 
     cache_keys = cache_keys(object_identifiers)
-    found_objects = @cache.read_multi(cache_keys)
+    found_objects = @cache.read_multi(*cache_keys)
 
     cache_keys.each do |cache_key|
       cached_object = found_objects[cache_key]
