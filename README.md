@@ -14,6 +14,23 @@ Bulk Cache Fetcher allows you to query the cache for a list of
 objects, and gives you the opportunity to fetch all of the cache
 misses at once, using whatever `:include`s you want.
 
+For example, if you have a list of objects by id to fetch, and a list
+of keys you want them to be cached under, you'd use Bulk Cache Fetcher
+like this:
+
+```ruby
+identifiers = {:cache_key_1 => 1, :cache_key_2 => 2, :cache_key_3 => 3}
+BulkCacheFetcher.new(Rails.cache).fetch(identifiers) do |uncached_keys_and_ids|
+  ids = uncached_keys_and_ids.values
+  BlogPost.where(:id => ids).includes([:author, :comments])
+end
+```
+
+This will include and cache each `BlogPost`, with comments and
+authors, as if you did the `.where.includes` without caching. If a
+`BlogPost` is cached already, it won't fetch it (or its includes) from
+the database.
+
 ## Installation
 
 Add this line to your application's Gemfile:
