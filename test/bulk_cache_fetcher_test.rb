@@ -20,7 +20,7 @@ class InMemoryCache
 
 end
 
-class BulkCacheFetcherTest < Minitest::Unit::TestCase
+class BulkCacheFetcherTest < Minitest::Test
 
   def setup
     @cache = InMemoryCache.new
