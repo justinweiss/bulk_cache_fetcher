@@ -28,41 +28,38 @@ class BulkCacheFetcher
   # objects, so you can use it for things like setting cache
   # expiration.
   def fetch(object_identifiers, options = {}, &finder_block)
-    cached_objects, uncached_identifiers = partition(object_identifiers)
-    coalesce(cached_objects, find(uncached_identifiers, options, &finder_block))
+    object_identifiers = normalize(object_identifiers)
+    cached_keys_with_objects, uncached_identifiers = partition(object_identifiers)
+    found_objects = find(uncached_identifiers, options, &finder_block)
+    coalesce(cache_keys(object_identifiers), cached_keys_with_objects, found_objects)
   end
 
   private
 
-  # Partitions a list of identifiers into two lists. The first list
-  # contains all of the objects we were able to serve from the cache,
-  # while the second is a list of all of the identifiers for objects
-  # that weren't cached.
+  # Splits a list of identifiers into two objects. The first is a hash
+  # of <tt>{cache_key: object}</tt> for all the objects we were able to serve
+  # from the cache. The second is a list of all of the identifiers for
+  # objects that weren't cached.
   def partition(object_identifiers)
-    object_identifiers = normalize(object_identifiers)
-    cached_objects = []
     uncached_identifiers = object_identifiers.dup
 
     cache_keys = cache_keys(object_identifiers)
-    found_objects = @cache.read_multi(*cache_keys)
+    cached_keys_with_objects = @cache.read_multi(*cache_keys)
 
     cache_keys.each do |cache_key|
-      cached_object = found_objects[cache_key]
-      uncached_identifiers.delete(cache_key) if cached_object
-      cached_objects << cached_object
+      uncached_identifiers.delete(cache_key) if cached_keys_with_objects.has_key?(cache_key)
     end
 
-    [cached_objects, uncached_identifiers]
+    [cached_keys_with_objects, uncached_identifiers]
   end
 
   # Finds all of the objects identified by +identifiers+, using the
   # +finder_block+. Will pass +options+ on to the cache.
   def find(identifiers, options = {}, &finder_block)
-    unless identifiers.empty?
-      Array(finder_block.(identifiers)).tap do |objects|
-        verify_equal_key_and_value_counts!(identifiers, objects)
-        cache_all(identifiers, objects, options)
-      end
+    return [] if identifiers.empty?
+    Array(finder_block.call(identifiers)).tap do |objects|
+      verify_equal_key_and_value_counts!(identifiers, objects)
+      cache_all(identifiers, objects, options)
     end
   end
 
@@ -78,11 +75,12 @@ class BulkCacheFetcher
     keys.zip(values) { |k, v| @cache.write(cache_key(k), v, options) }
   end
 
-  # With an array looking like <tt>[nil, 1, nil, 2]</tt>, replaces the
-  # nils with values taken from +found_objects+, in order.
-  def coalesce(array_with_nils, found_objects)
+  # Given a list of +cache_keys+, either find associated objects from
+  # +cached_keys_with_objects, or grab them from +found_objects+, in
+  # order.
+  def coalesce(cache_keys, cached_keys_with_objects, found_objects)
     found_objects = Array(found_objects)
-    array_with_nils.map { |obj| obj ? obj : found_objects.shift }
+    cache_keys.map { |key| cached_keys_with_objects.fetch(key) { found_objects.shift } }
   end
 
   # Returns the part of the identifier that we can use as the cache

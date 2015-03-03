@@ -13,7 +13,7 @@ class InMemoryCache
   def read_multi(*keys)
     results = {}
     keys.each do |key|
-      results[key] = read(key) if read(key)
+      results[key] = read(key) if cache.has_key?(key)
     end
     results
   end
@@ -125,5 +125,14 @@ class BulkCacheFetcherTest < Minitest::Unit::TestCase
       2
     end
     assert_equal(2, @cache.read(:one))
+  end
+
+  def test_doesnt_break_if_nils_are_cached
+    @cache.write(:two, nil)
+    results = @cache_fetcher.fetch([:one, :two, :three]) do |keys|
+      [1, 3]
+    end
+    assert_equal(nil, results[1])
+    assert_equal(3, results[2])
   end
 end
