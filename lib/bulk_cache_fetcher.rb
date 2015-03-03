@@ -80,7 +80,7 @@ class BulkCacheFetcher
   # order.
   def coalesce(cache_keys, cached_keys_with_objects, found_objects)
     found_objects = Array(found_objects)
-    cache_keys.map { |key| cached_keys_with_objects[key] || found_objects.shift }
+    cache_keys.map { |key| cached_keys_with_objects.fetch(key) { found_objects.shift } }
   end
 
   # Returns the part of the identifier that we can use as the cache
